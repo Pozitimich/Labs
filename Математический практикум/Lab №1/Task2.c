@@ -6,23 +6,12 @@
 #define ull unsigned long long
 #define ll long long
 
-
-enum status_code
+enum code_status
 {
-	OK,
-	INVALID_PARAMETER,
-	MY_OVERFLOW,
-	DIVISION_BY_ZERO,
-	UNKNOWN_ERROR,
-	RESERVED,
+	ok,
+	overflow,
+	incorrect_input
 };
-
-//enum code_status
-//{
-//	ok,
-//	overflow,
-//	incorrect_input
-//};
 
 ull fact(int n)
 {
