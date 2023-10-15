@@ -26,10 +26,10 @@ static const char* errors[] =
     "Unknown error\n"
 };
 
-ull file_size(FILE* file) 
+size_t file_size(FILE* file) 
 {
     fseek(file, 0, SEEK_END);
-    ull f_size = ftell(file);
+    size_t f_size = ftell(file);
     while (getc(file) != EOF)
     {
         ++f_size;
@@ -59,7 +59,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    ull f_size = file_size(fin);
+    size_t f_size = file_size(fin);
 
     char* buff = malloc(sizeof(char) * f_size);
     if (buff == NULL)
