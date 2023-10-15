@@ -55,6 +55,7 @@ int main(int argc, char** argv)
     if ((fout = fopen(argv[2], "wb")) == NULL)
     {
         printf("%s", errors[file_opening_error]);
+        fclose(fin);
         return 1;
     }
 
@@ -64,18 +65,26 @@ int main(int argc, char** argv)
     if (buff == NULL)
     {
         printf("%s", errors[malloc_error]);
+        fclose(fin);
+        fclose(fout);
         return 1;
     }
 
     if (fread(buff, sizeof(char), f_size, fin) != f_size)
     {
         printf("%s", errors[file_reading_error]);
+        free(buff);
+        fclose(fin);
+        fclose(fout);
         return 1;
     }
 
     if (fwrite(buff, sizeof(char), f_size, fout) != f_size)
     {
         printf("%s", errors[unknown_error]);
+        free(buff);
+        fclose(fin);
+        fclose(fout);
         return 1;
     }
 
