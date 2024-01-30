@@ -6,7 +6,7 @@
 #define ull unsigned long long
 #define ll long long
 
-enum code_status
+enum status_code
 {
     ok,
     incorrect_input,
@@ -62,6 +62,7 @@ int i_latin_in_line(FILE* in, FILE* out)
         else if (isalpha(c))
         {
             ++k;
+            if (k == INT_MAX) return overflow;
         }
         c = fgetc(in);
     }
@@ -86,6 +87,7 @@ int s_strange_in_line(FILE* in, FILE* out)
         else if (!(isalpha(c) || isdigit(c) || c == ' ' || c == '\t'))
         {
             ++k;
+            if (k == INT_MAX) return overflow;
         }
         c = fgetc(in);
     }
@@ -130,8 +132,10 @@ int add_prefix(char* in, char* prefix, char** out)
     int prefix_len = strlen(prefix);
 
     *out = calloc(in_len + prefix_len, sizeof(char));
+    if (*out == NULL) return malloc_error;
+
     int added = 0;
-    for (int i = in_len; i >= 0; --i)
+    for (int i = in_len-1; i >= 0; --i)
     {
         if (in[i] == '/') 
         {
@@ -205,11 +209,6 @@ int main(int argc, char** argv)
     }
 
     char* in_name = argv[2];
-    if (in_name == NULL)
-    {
-        printf(errors[malloc_error]);
-        return 1;
-    }
     char* out_name;
 
     if (flag[1] == 'n')
@@ -237,25 +236,32 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    int status;
     switch (flag_letter)
     {
     case 'd':
-        d_exclude_arab_nums(input, output);
+        status = d_exclude_arab_nums(input, output);
         break;
     case 'i':
-        i_latin_in_line(input, output);
+        status = i_latin_in_line(input, output);
         break;
     case 's':
-        s_strange_in_line(input, output);
+        status = s_strange_in_line(input, output);
         break;
     case 'a':
-        a_letters_to_16b_ascii(input, output);
+        status = a_letters_to_16b_ascii(input, output);
         break;
     }
 
     if (flag_letter == 'n') free(out_name);
     fclose(input);
     fclose(output);
+
+    if (status != ok)
+    {
+        printf(errors[status]);
+        return 1;
+    }
 
     return 0;
 }
