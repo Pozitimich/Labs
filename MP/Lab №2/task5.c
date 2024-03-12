@@ -41,6 +41,7 @@ int is_extra_specifier_begin(char ch)
 
 void int_to_roman(int number, char* roman)
 {	
+	if(roman == NULL) return;
 	int vals[] = {1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1};
 	char* rom_vals[] = {"M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"};
 	int i = 0;
@@ -173,6 +174,22 @@ int str_int_to_int(const char* str_int, int base, int uppercase, int* number)
 	return 0;
 }
 
+void number_dump(void *ptr, size_t size, char* ans) 
+{
+	int i;
+	int number;
+	size_t data;
+	if (ptr == NULL || ans == NULL) return;
+	number = (size)*8;
+	data = *(size_t*)ptr;
+	for (i = 0; i < number; ++i)
+	{
+		ans[i] = (data & ((size_t)1 << (number - i - 1))) ? '1' : '0';
+	}
+	ans[i] = '\0';
+	return;
+}
+
 int overfprintf(FILE* file, const char* format, ...)
 {
 	ull spec_len = 1;
@@ -185,8 +202,9 @@ int overfprintf(FILE* file, const char* format, ...)
 	char* tmp;
 	char last_ch;
 	int cnt, number;
-	char str[49];
-	unsigned unumber;
+	double dnumber;
+	float fnumber;
+	char str[65];
 	int base, uppercase;
 	ull data, i;
 	char bit;
@@ -292,8 +310,8 @@ int overfprintf(FILE* file, const char* format, ...)
 				}
 				else if (!strcmp(spec, "%Zr"))
 				{
-					unumber = va_arg(va, unsigned);
-					uint_to_zeckendorf(unumber, str);
+					number = (int) va_arg(va, unsigned);
+					uint_to_zeckendorf(number, str);
 					print_cnt += fprintf(file, "%s", str);
 				}
 				else if (!strcmp(spec, "%Cv") || !strcmp(spec, "%CV"))
@@ -317,59 +335,27 @@ int overfprintf(FILE* file, const char* format, ...)
 				}
 				else if (!strcmp(spec, "%mi"))
 				{
-					data = va_arg(va, int);
-					for (i = 0; i < 8 * sizeof(int); ++i)
-					{
-						bit = (data & (1 << (8 * sizeof(int) - i - 1))) ? '1' : '0';
-						putc(bit, file);
-						if (i > 0 && i % 8 == 0)
-						{
-							putc(' ', file);
-						}
-					}
-					print_cnt += 9*sizeof(int) - 1;
+					number = va_arg(va, int);
+					number_dump(&number, sizeof(int), str);
+					print_cnt += fprintf(file, "%s", str);
 				}
 				else if (!strcmp(spec, "%mu"))
 				{
-					data = va_arg(va, unsigned);
-					for (i = 0; i < 8 * sizeof(unsigned); ++i)
-					{
-						char bit = (data & (1 << (8 * sizeof(unsigned) - i - 1))) ? '1' : '0';
-						putc(bit, file);
-						if (i > 0 && i % 8 == 0)
-						{
-							putc(' ', file);
-						}
-					}
-					print_cnt += 9*sizeof(unsigned) - 1;
+					number = (int) va_arg(va, int);
+					number_dump(&number, sizeof(int), str);
+					print_cnt += fprintf(file, "%s", str);
 				}
 				else if (!strcmp(spec, "%md"))
 				{
-					data = va_arg(va, double);
-					for (i = 0; i < 8 * sizeof(double); ++i)
-					{
-						char bit = (data & (1 << (8 * sizeof(double) - i - 1))) ? '1' : '0';
-						putc(bit, file);
-						if (i > 0 && i % 8 == 0)
-						{
-							putc(' ', file);
-						}
-					}
-					print_cnt += 9*sizeof(double) - 1;
+					dnumber = va_arg(va, double);
+					number_dump(&dnumber, sizeof(double), str);
+					print_cnt += fprintf(file, "%s", str);
 				}
 				else if (!strcmp(spec, "%mf"))
 				{
-					data = va_arg(va, double);
-					for (i = 0; i < 8 * sizeof(float); ++i)
-					{
-						bit = (data & (1 << (8 * sizeof(float) - i - 1))) ? '1' : '0';
-						putc(bit, file);
-						if (i > 0 && i % 8 == 0)
-						{
-							putc(' ', file);
-						}
-					}
-					print_cnt += 9*sizeof(float) - 1;
+					fnumber = (float) va_arg(va, double);
+					number_dump(&fnumber, sizeof(float), str);
+					print_cnt += fprintf(file, "%s", str);
 				}
 				else
 				{
@@ -410,10 +396,12 @@ int oversprintf(char* dest, const char* format, ...)
 	char* tmp;
 	char last_ch;
 	int cnt, number;
-	char str[49];
-	unsigned unumber;
+	double dnumber;
+	float fnumber;
+	char str[65];
 	int base, uppercase;
-	ull data, i;
+	ull i;
+	size_t data;
 	char bit;
 	if (dest == NULL || format == NULL)
 	{
@@ -517,7 +505,7 @@ int oversprintf(char* dest, const char* format, ...)
 				}
 				else if (!strcmp(spec, "%Zr"))
 				{
-					number = va_arg(va, unsigned);
+					number = (int) va_arg(va, unsigned);
 					uint_to_zeckendorf(number, str);
 					dest_len += sprintf(dest + dest_len, "%s", str);
 				}
@@ -540,57 +528,23 @@ int oversprintf(char* dest, const char* format, ...)
 					}
 					dest_len += sprintf(dest + dest_len, "%d", number);
 				}
-				else if (!strcmp(spec, "%mi"))
+				else if (!strcmp(spec, "%mi") || !strcmp(spec, "%mu"))
 				{
-					data = va_arg(va, int);
-					for (i = 0; i < 8 * sizeof(int); ++i)
-					{
-						bit = (data & (1 << (8 * sizeof(int) - i - 1))) ? '1' : '0';
-						dest[dest_len++] = bit;
-						if (i > 0 && i % 8 == 0)
-						{
-							dest[dest_len++] = ' ';
-						}
-					}
-				}
-				else if (!strcmp(spec, "%mu"))
-				{
-					data = va_arg(va, unsigned);
-					for (i = 0; i < 8 * sizeof(unsigned); ++i)
-					{
-						bit = (data & (1 << (8 * sizeof(unsigned) - i - 1))) ? '1' : '0';
-						dest[dest_len++] = bit;
-						if (i > 0 && i % 8 == 0)
-						{
-							dest[dest_len++] = ' ';
-						}
-					}
+					number = va_arg(va, int);
+					number_dump(&number, sizeof(int), str);
+					dest_len += sprintf(dest + dest_len, "%s", str);
 				}
 				else if (!strcmp(spec, "%md"))
 				{
-					data = va_arg(va, double);
-					for (i = 0; i < 8 * sizeof(double); ++i)
-					{
-						bit = (data & (1 << (8 * sizeof(double) - i - 1))) ? '1' : '0';
-						dest[dest_len++] = bit;
-						if (i > 0 && i % 8 == 0)
-						{
-							dest[dest_len++] = ' ';
-						}
-					}
+					dnumber = va_arg(va, double);
+					number_dump(&dnumber, sizeof(double), str);
+					dest_len += sprintf(dest + dest_len, "%s", str);
 				}
 				else if (!strcmp(spec, "%mf"))
 				{
-					data = va_arg(va, double);
-					for (i = 0; i < 8 * sizeof(float); ++i)
-					{
-						bit = (data & (1 << (8 * sizeof(float) - i - 1))) ? '1' : '0';
-						dest[dest_len++] = bit;
-						if (i > 0 && i % 8 == 0)
-						{
-							dest[dest_len++] = ' ';
-						}
-					}
+					fnumber = (float) va_arg(va, double);
+					number_dump(&fnumber, sizeof(float), str);
+					dest_len += sprintf(dest + dest_len, "%s", str);
 				}
 				else
 				{
@@ -631,8 +585,8 @@ int main(int argc, char** argv)
 	x = overfprintf(stdout, "%to %TO %to\n", "1y", 36,  "FF", 16,  "33", 4);
 	x = overfprintf(stdout, "%mi\n", 10);
 	x = overfprintf(stdout, "%mu\n", 10);
-	x = overfprintf(stdout, "%md\n", 10.5);
-	x = overfprintf(stdout, "%mf\n", 10.5);
+	x = overfprintf(stdout, "%md\n", -312.3125);
+	x = overfprintf(stdout, "%mf\n", -312.3125);
 	printf("%d\n\n", x);
 	
 	x = oversprintf(dest, "%lld %c %s %n %E\n", 5, 'q', "str", 123.456);
@@ -647,13 +601,13 @@ int main(int argc, char** argv)
 	printf("%s", dest);
 	x = oversprintf(dest, "%to %TO %to\n", "1y", 36,  "FF", 16,  "33", 4);
 	printf("%s", dest);
-	x = oversprintf(dest, "%mi\n", 10);
+	x = oversprintf(dest, "%mi\n", INT_MAX);
 	printf("%s", dest);
-	x = oversprintf(dest, "%mu\n", 10);
+	x = oversprintf(dest, "%mu\n", INT_MAX);
 	printf("%s", dest);
-	x = oversprintf(dest, "%md\n", 10.5);
+	x = oversprintf(dest, "%md\n", -312.3125);
 	printf("%s", dest);
-	x = oversprintf(dest, "%mf\n", 10.5);
+	x = oversprintf(dest, "%mf\n", -312.3125);
 	printf("%s", dest);
 	printf("%d\n", x);
 }
