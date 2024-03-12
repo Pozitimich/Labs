@@ -174,20 +174,24 @@ int str_int_to_int(const char* str_int, int base, int uppercase, int* number)
 	return 0;
 }
 
-void number_dump(void *ptr, size_t size, char* ans) 
+void number_dump(void *num, size_t size, char* ans) 
 {
-	int i;
-	int number;
-	size_t data;
-	if (ptr == NULL || ans == NULL) return;
-	number = (size)*8;
-	data = *(size_t*)ptr;
-	for (i = 0; i < number; ++i)
+	char* ptr = (char*)num;
+    int ind;
+	if (ans == NULL) return;
+	ind = (size-1)*8;
+	
+    for (int i = size*8; i >= 0; --i)
 	{
-		ans[i] = (data & ((size_t)1 << (number - i - 1))) ? '1' : '0';
-	}
-	ans[i] = '\0';
-	return;
+		ans[ind++] = (((*ptr) >> ((i-1) % 8)) & 1) + '0';
+        if ((i-1) % 8 == 0) 
+		{
+			ind -= 16;
+			++ptr;
+		}
+    }
+    ans[size*8] = '\0';
+    return;
 }
 
 int overfprintf(FILE* file, const char* format, ...)
